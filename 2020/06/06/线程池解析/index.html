@@ -79,12 +79,29 @@
 
 
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="博客">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="前言： 本篇文章主要介绍的是Java（Javaee和Android开发都会涉及）中的线程池。线程池不仅是Java多线程编程的重要基础，而且也是Android面试和Javaee面试中，面试官心血来潮突然向你发难的一道面试题（可能他自己也说不清楚道不明白线程池的概念和应用场景，但他们就是想见你一脸尴尬的表情以此作为压低你工资的筹码）。说到线程池之前，我们首先必须理清楚 线程、并行和并发、多线程的基本概">
+<meta property="og:type" content="article">
+<meta property="og:title" content="线程池解析">
+<meta property="og:url" content="http://yoursite.com/2020/06/06/%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%A7%A3%E6%9E%90/index.html">
 <meta property="og:site_name" content="博客">
+<meta property="og:description" content="前言： 本篇文章主要介绍的是Java（Javaee和Android开发都会涉及）中的线程池。线程池不仅是Java多线程编程的重要基础，而且也是Android面试和Javaee面试中，面试官心血来潮突然向你发难的一道面试题（可能他自己也说不清楚道不明白线程池的概念和应用场景，但他们就是想见你一脸尴尬的表情以此作为压低你工资的筹码）。说到线程池之前，我们首先必须理清楚 线程、并行和并发、多线程的基本概">
+<meta property="og:image" content="http://yoursite.com/images/pasted-1.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-2.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-3.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-4.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-5.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-6.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-7.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-8.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-9.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-10.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-11.png">
+<meta property="og:image" content="http://yoursite.com/images/pasted-12.png">
+<meta property="article:published_time" content="2020-06-06T03:13:47.000Z">
+<meta property="article:modified_time" content="2020-06-06T03:21:14.628Z">
 <meta property="article:author" content="lipeng">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/pasted-1.png">
 
 
 
@@ -114,13 +131,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/06/06/线程池解析/"/>
 
 
 
 
 
-  <title>博客</title>
+  <title>线程池解析 | 博客</title>
   
 
 
@@ -139,8 +156,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -277,9 +293,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -309,9 +325,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/06/06/%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%A7%A3%E6%9E%90/" itemprop="url">线程池解析</a></h1>
+          <h1 class="post-title" itemprop="name headline">线程池解析</h1>
         
 
         <div class="post-meta">
@@ -392,9 +406,7 @@
       
 
       
-        
-          
-            <p>前言：</p>
+        <p>前言：</p>
 <pre><code>本篇文章主要介绍的是Java（Javaee和Android开发都会涉及）中的线程池。线程池不仅是Java多线程编程的重要基础，而且也是Android面试和Javaee面试中，面试官心血来潮突然向你发难的一道面试题（可能他自己也说不清楚道不明白线程池的概念和应用场景，但他们就是想见你一脸尴尬的表情以此作为压低你工资的筹码）。说到线程池之前，我们首先必须理清楚 线程、并行和并发、多线程的基本概念。
 
 线程池的概念大致理清楚之后，我们在分析OkHttp这一经典网络框架内部的线程池是如何实现的，通过分析源码进一步加深线程池概念。文章一如既往原来的风格，篇幅较长但力争写得详细明白。笔者从开始写到发布花了自己近一周的业余时间。（已对部分内容已进行了删减，初版达到了万字）个人希望看到这篇文章的开发者可以耐心、仔细、慢慢的看完，分段阅读也是较好的选择。
@@ -593,8 +605,6 @@ Okhttp的常用写法如下：</code></pre><p>Okhttp常用写法<br>    配置�
 这个方法的主要功能是，首先遍历 readyAsyncCalls，把任务取出来；把取出来的任务加入 到runningAsyncCalls；最后， 把任务放入线程池。原来把任务添加到线程池是在Dispatcher这里进行的。(这个类内部不仅创建了线程池，也将任务添加了进来)
 
 总体来说，当请求任务数大于 maxRequests 并且相同 host 最大请求数大于 maxRequestsPerHost，就会把请求任务放在 readyAsyncCalls 队列里；当线程池里执行任务的 runnable 执行完任务在最后会检查 readyAsyncCalls 里有没有任务，如果有任务并且是同一个 host 就放入到线程池中执行。因此通过这个方法不断地从 readyAsyncCalls 队列里取出任务，对线程池里的线程进行复用。</code></pre>
-          
-        
       
     </div>
     
@@ -602,179 +612,97 @@ Okhttp的常用写法如下：</code></pre><p>Okhttp常用写法<br>    配置�
     
     <div>
          
+          <div>
+     
+        <div style="text-align:center;color:#bfbfbf;font-size:16px;"> 
+        <span>-------- 本文结束 </span> 
+        <i class="fa fa-paw"></i> 
+        <span> 感谢阅读 --------</span> 
+        </div> 
+    
+</div> 
+         
     </div>
 
     
 
     
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
 
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/account.png" alt="lipeng 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="lipeng 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+     lipeng 
+  </li>
+  <li class="post-copyright-link">
+  <strong>本文链接：</strong>
+  <a href="http://lipeng.cool/2020/06/06/线程池解析/" target="_blank" rel="noopener" title="线程池解析">http://lipeng.cool/2020/06/06/线程池解析/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
     
 
     <footer class="post-footer">
       
 
       
-
-      
-
       
       
-        <div class="post-eof"></div>
+
       
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/01/%E5%88%9D%E5%A7%8B%E5%8C%96-1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lipeng">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="博客">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/06/01/%E5%88%9D%E5%A7%8B%E5%8C%96-1/" itemprop="url">初始化</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
             
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-01T18:38:00+08:00">
-                2020-06-01
-              </time>
+              <a href="/2020/06/01/%E5%88%9D%E5%A7%8B%E5%8C%96-1/" rel="next" title="初始化">
+                <i class="fa fa-chevron-left"></i> 初始化
+              </a>
             
+          </div>
 
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
             
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-            <div class="post-wordcount">
-              
-                
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-file-word-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">字数统计&#58;</span>
-                
-                <span title="字数统计">
-                  11
-                </span>
-              
-
-              
-                <span class="post-meta-divider">|</span>
-              
-
-              
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-clock-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
-                
-                <span title="阅读时长">
-                  1
-                </span>
-              
-            </div>
-          
-
-          
-
+          </div>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            <p>设定得值看下会不会有用</p>
-<p><img src="/images/pasted-0.png" alt="upload successful"></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-    <div>
-         
-    </div>
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -784,176 +712,11 @@ Okhttp的常用写法如下：</code></pre><p>Okhttp常用写法<br>    配置�
   </article>
 
 
-    
-      
 
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/28/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lipeng">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="博客">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/05/28/hello-world/" itemprop="url">Hello World</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-28T23:15:59+08:00">
-                2020-05-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-            <div class="post-wordcount">
-              
-                
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-file-word-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">字数统计&#58;</span>
-                
-                <span title="字数统计">
-                  73
-                </span>
-              
-
-              
-                <span class="post-meta-divider">|</span>
-              
-
-              
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-clock-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
-                
-                <span title="阅读时长">
-                  1
-                </span>
-              
-            </div>
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-
-          
-        
+    <div class="post-spread">
       
     </div>
-    
-    
-    
-    <div>
-         
-    </div>
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
   </div>
-  
-  
-  
-  </article>
-
-
-    
-  </section>
-
-  
 
 
           </div>
@@ -961,6 +724,10 @@ Okhttp的常用写法如下：</code></pre><p>Okhttp常用写法<br>    配置�
 
 
           
+
+  
+
+
 
         </div>
         
@@ -1168,6 +935,10 @@ Okhttp的常用写法如下：</code></pre><p>Okhttp常用写法<br>    配置�
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 
